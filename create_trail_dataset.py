@@ -1,3 +1,5 @@
+import json
+
 import osmium
 import shapely.wkb
 from shapely.geometry import LineString, MultiLineString
@@ -53,14 +55,17 @@ class RelationToWayConstructor(osmium.SimpleHandler):
 
     def __init__(self):
         super().__init__()
-        self.relation_ids: dict[int, list] = {}
+        self.relation_info: dict = {}
 
     def relation(self, r):
         if r.tags.get('route') == 'hiking':
-            self.relation_ids[r.id] = []
+            self.relation_info[r.id] = {
+                'name': r.tags.get('name'),
+                'ways': []
+            }
             for member in r.members:
                 if member.type == 'w':
-                    self.relation_ids[r.id].append(member.ref)
+                    self.relation_info[r.id]['ways'].append(member.ref)
 
 
 class NodesPerWayConstructor(osmium.SimpleHandler):
@@ -82,20 +87,26 @@ relation_to_way_constructor = RelationToWayConstructor()
 relation_to_way_constructor.apply_file('greece-260524.osm.pbf')
 
 nodes_per_way_constructor = NodesPerWayConstructor(
-    way_ids=set([way for ways in relation_to_way_constructor.relation_ids.values() for way in ways])
+    way_ids=set(
+        [way
+         for relation_id in relation_to_way_constructor.relation_info.keys()
+         for way in relation_to_way_constructor.relation_info[relation_id]['ways']]
+    )
 )
 nodes_per_way_constructor.apply_file('greece-260524.osm.pbf', locations=True)
 
 trails = []
-for relation_id, way_ids in relation_to_way_constructor.relation_ids.items():
+for relation_id, relation_info in relation_to_way_constructor.relation_info.items():
     lines = [
-        LineString(nodes_per_way_constructor.nodes_per_way[wid])
-        for wid in way_ids
+        nodes_per_way_constructor.nodes_per_way[wid]
+        for wid in relation_info['ways']
         if wid in nodes_per_way_constructor.nodes_per_way and len(nodes_per_way_constructor.nodes_per_way[wid]) >= 2
     ]
     if lines:
         trails.append({
             'id': relation_id,
+            'name': relation_info['name'],
+            'path': [coordinate for line in lines for coordinate in line],
             'geometry': MultiLineString(lines),
             'names': [],  # admin_level -> list of names
         })
@@ -109,4 +120,9 @@ for trail in trails:
         b = area_constructor.boundaries[i]
         trail['names'].append(b['name'])
 
+for trail in trails:
+    trail.pop('geometry')
+
+with open('trails.json', 'w') as f:
+    f.write(json.dumps(trails))
 print(1)

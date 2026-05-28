@@ -108,7 +108,7 @@ for relation_id, relation_info in relation_to_way_constructor.relation_info.item
             'name': relation_info['name'],
             'path': [coordinate for line in lines for coordinate in line],
             'geometry': MultiLineString(lines),
-            'names': [],  # admin_level -> list of names
+            'description': [],  # admin_level -> list of names
         })
 
 boundary_geoms = [b['geometry'] for b in area_constructor.boundaries]
@@ -118,7 +118,7 @@ for trail in trails:
     indexes = tree.query(trail['geometry'], predicate='intersects')
     for i in indexes:
         b = area_constructor.boundaries[i]
-        trail['names'].append(b['name'])
+        trail['description'].append(b['name'])
 
 for trail in trails:
     trail.pop('geometry')

@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+from lancedb.pydantic import LanceModel
 from pydantic import BaseModel, Field
 
 
@@ -46,3 +47,33 @@ class HikingDatabaseQuery(BaseModel):
 
 class UserRequest(BaseModel):
     query: str
+
+
+class Coordinate(BaseModel):
+    lon: float
+    lat: float
+
+
+# class TrailDb(BaseModel):
+#     id: int
+#     name: Optional[str]
+#     start_point: Coordinate
+#     end_point: Coordinate
+#     coordinates: list[Coordinate]
+#     length: float
+#     elevation_profile: list[int]
+#     ascend: int
+#     descend: int
+#     description: str
+
+class TrailDb(LanceModel):
+    id: int
+    name: Optional[str]
+    start_point: Coordinate
+    end_point: Coordinate
+    coordinates: list[Coordinate]
+    length: float
+    elevation_profile: list[int]
+    ascend: int
+    descend: int
+    description: str

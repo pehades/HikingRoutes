@@ -1,12 +1,14 @@
 import numpy as np
 import srtm
 
+from hiking_routes.models import Coordinate
+
 srtm_data = srtm.get_data()
 
 
-def haversine(coordinates: list[tuple]) -> np.ndarray:
+def haversine(coordinates: list[dict]) -> float:
 
-    coordinates = np.array([list(coordinate) for coordinate in coordinates])
+    coordinates = np.array([[coordinate['lon'], coordinate['lat']] for coordinate in coordinates])
     """
     Compute pairwise haversine distances between consecutive points.
 
@@ -25,9 +27,9 @@ def haversine(coordinates: list[tuple]) -> np.ndarray:
     return float((2 * R * np.arcsin(np.sqrt(a)) / 1000).sum().round(1))
 
 
-def get_elevation(coordinates: list):
+def get_elevation(coordinates: list[dict]):
     elevation = [
-        srtm_data.get_elevation(coordinate[1], coordinate[0])
+        srtm_data.get_elevation(coordinate['lon'], coordinate['lat'])
         for coordinate in coordinates
     ]
     return [v for v in elevation if v is not None]

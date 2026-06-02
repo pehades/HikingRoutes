@@ -6,6 +6,7 @@ from shapely.geometry import MultiLineString
 from shapely.strtree import STRtree
 
 from geometry import get_elevation, haversine
+from hiking_routes.models import TrailDb
 
 
 class TrailRoute:
@@ -79,7 +80,7 @@ class NodesPerWayConstructor(osmium.SimpleHandler):
 
     def way(self, w):
         if w.id in self.way_ids:
-            self.nodes_per_way[w.id] = [(n.lon, n.lat) for n in w.nodes]
+            self.nodes_per_way[w.id] = [{'lon': n.lon, 'lat': n.lat} for n in w.nodes]
 
 
 area_constructor = AreaConstructor()
@@ -107,6 +108,9 @@ for relation_id, relation_info in relation_to_way_constructor.relation_info.item
     ]
     if lines:
         coordinates = [coordinate for line in lines for coordinate in line]
+        geometry = [
+            [[coordinate['lon'], coordinate['lat']] for coordinate in line] for line in lines
+        ]
         elevation_profile = get_elevation(coordinates)
         ascend = sum([max(0, elevation_profile[i] - elevation_profile[i-1]) for i in range(1, len(elevation_profile))])
         descend = sum([min(0, elevation_profile[i] - elevation_profile[i-1]) for i in range(1, len(elevation_profile))])
@@ -123,7 +127,7 @@ for relation_id, relation_info in relation_to_way_constructor.relation_info.item
             'elevation_profile': elevation_profile,
             'ascend': ascend,
             'descend': descend,
-            'geometry': MultiLineString(lines),
+            'geometry': MultiLineString(geometry),
             'description': [],
         })
 
@@ -136,9 +140,17 @@ for trail in trails:
         b = area_constructor.boundaries[i]
         trail['description'].append(b['name'])
 
+trails_processed = []
 for trail in trails:
+    if trail['name'] is None or trail['name'] == '':
+        continue
     trail.pop('geometry')
+    trail['description'] = ' '.join(trail['description'])
+
+    trails_processed.append(trail)
+
+
 
 with open('trails.json', 'w') as f:
-    f.write(json.dumps(trails))
+    f.write(json.dumps(trails_processed))
 print(1)

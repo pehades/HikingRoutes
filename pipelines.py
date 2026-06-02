@@ -2,6 +2,7 @@ import re
 
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
+from unidecode import unidecode
 
 
 class CommonWordRemover:
@@ -28,3 +29,16 @@ class CommonWordRemover:
     def strip(text, stopwords):
         tokens = text.split(' ')
         return ' '.join(t for t in tokens if t.lower() not in stopwords)
+
+
+class WordNormalizer:
+
+    def __init__(self):
+        self.LEET = str.maketrans("08134567", "obleasgt")
+
+    def run(self, text: str) -> str:
+        text = text.lower().strip()
+        text = text.translate(self.LEET)
+        text = unidecode(text)
+        text = ''.join(c for c in text if c.isalnum())
+        return text

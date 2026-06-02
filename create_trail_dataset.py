@@ -2,8 +2,10 @@ import json
 
 import osmium
 import shapely.wkb
-from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import MultiLineString
 from shapely.strtree import STRtree
+
+from geometry import get_elevation, haversine
 
 
 class TrailRoute:
@@ -96,6 +98,7 @@ nodes_per_way_constructor = NodesPerWayConstructor(
 nodes_per_way_constructor.apply_file('greece-260524.osm.pbf', locations=True)
 
 trails = []
+
 for relation_id, relation_info in relation_to_way_constructor.relation_info.items():
     lines = [
         nodes_per_way_constructor.nodes_per_way[wid]
@@ -103,12 +106,25 @@ for relation_id, relation_info in relation_to_way_constructor.relation_info.item
         if wid in nodes_per_way_constructor.nodes_per_way and len(nodes_per_way_constructor.nodes_per_way[wid]) >= 2
     ]
     if lines:
+        coordinates = [coordinate for line in lines for coordinate in line]
+        elevation_profile = get_elevation(coordinates)
+        ascend = sum([max(0, elevation_profile[i] - elevation_profile[i-1]) for i in range(1, len(elevation_profile))])
+        descend = sum([min(0, elevation_profile[i] - elevation_profile[i-1]) for i in range(1, len(elevation_profile))])
+
+        trail_length = haversine(coordinates)
+
         trails.append({
             'id': relation_id,
             'name': relation_info['name'],
-            'path': [coordinate for line in lines for coordinate in line],
+            'start_point': coordinates[0],
+            'end_point': coordinates[-1],
+            'coordinates': coordinates,
+            'length': trail_length,
+            'elevation_profile': elevation_profile,
+            'ascend': ascend,
+            'descend': descend,
             'geometry': MultiLineString(lines),
-            'description': [],  # admin_level -> list of names
+            'description': [],
         })
 
 boundary_geoms = [b['geometry'] for b in area_constructor.boundaries]

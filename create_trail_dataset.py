@@ -17,7 +17,7 @@ class TrailRoute:
 
 
 class AreaConstructor(osmium.SimpleHandler):
-    def __init__(self, admin_levels=(2, 4, 6, 7, 8, 10)):
+    def __init__(self, admin_levels=(4, 5)):
         super().__init__()
         self.admin_levels = set(admin_levels)
         self.wkbfab = osmium.geom.WKBFactory()

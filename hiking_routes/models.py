@@ -29,7 +29,7 @@ class HikingDatabaseQuery(BaseModel):
     )
 
     trail_length_min: Optional[int] = Field(
-        ...,
+        None,
         description="""
         Optional. Minimum number of kilometers a hiking trail should be. Provide if user mentions phrases like
         long trail, all day hike etc. 
@@ -37,7 +37,7 @@ class HikingDatabaseQuery(BaseModel):
     )
 
     trail_length_max: Optional[int] = Field(
-        ...,
+        None,
         description="""
         Optional. Minimum number of kilometers a hiking trail should be. Provide if user mentions phrases like
         small trail, quick route etc. 

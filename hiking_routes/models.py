@@ -56,6 +56,15 @@ class Coordinate(BaseModel):
     lat: float
 
 
+class Trail(BaseModel):
+    _distance: float
+    name: Optional[str]
+    start_point: Coordinate
+    end_point: Coordinate
+    length: float
+    ascend: int
+    descend: int
+
 # class TrailDb(BaseModel):
 #     id: int
 #     name: Optional[str]

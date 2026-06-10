@@ -15,7 +15,7 @@ full_chain = chain | RunnableLambda(
 )
 
 
-@app.post('/query')
+@app.post('/query', response_model=list[Trail])
 def query(user_request: UserRequest):
     print('invoking chain')
     return {'answer': full_chain.invoke({'question': user_request.query})}

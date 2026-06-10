@@ -1,13 +1,14 @@
 from lancedb import DBConnection
+from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-from hiking_routes.models import HikingDatabaseQuery
+from hiking_routes.models import HikingDatabaseQuery, Trail
 from pipelines import WordNormalizer
 
 
 class TrailFinder:
 
-    def __init__(self, db: DBConnection, word_normalizer: WordNormalizer):
+    def __init__(self, db: DBConnection, word_normalizer: WordNormalizer) -> list[Trail]:
         self.db = db
         self.word_normalizer = word_normalizer
         self.embedding = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
@@ -25,5 +26,5 @@ class TrailFinder:
         if user_query.trail_length_max is not None:
             q = q.where(f'length < {user_query.trail_length_max}')
 
-        return q.limit(10).to_list()
+        return [Trail.model_validate(result) for result in q.limit(10).to_list()]
 

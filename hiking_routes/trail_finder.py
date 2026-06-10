@@ -1,4 +1,5 @@
 from lancedb import DBConnection
+from sentence_transformers import SentenceTransformer
 
 from hiking_routes.models import HikingDatabaseQuery
 from pipelines import WordNormalizer
@@ -9,25 +10,20 @@ class TrailFinder:
     def __init__(self, db: DBConnection, word_normalizer: WordNormalizer):
         self.db = db
         self.word_normalizer = word_normalizer
+        self.embedding = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-    def find_trail(self, query: HikingDatabaseQuery):
-
-        predicates = []
-        if query.trail_length_min is not None:
-            predicates.append(f'trail_length > {query.trail_length_min}')
-        if query.trail_length_max is not None:
-            predicates.append(f'trail_length < {query.trail_length_max}')
-
-        name_predicates = []
-        for possible_area in query.trail_possible_areas:
-            name_predicates.append(f"description LIKE '%{self.word_normalizer.run(possible_area)}%'")
-        predicates.append(
-            f"({' OR '.join(name_predicates)})"
-        )
-
-        final_predicate = ' OR '.join(predicates)
+    def find_trail(self, user_query: HikingDatabaseQuery):
 
         table = self.db.open_table(name='trails')
-        return table.search(final_predicate).limit(10).to_list()
+        embedding = self.embedding.encode(user_query.trail_possible_areas)
 
-    # table.to_lance().scanner(filter=f'levenshtein(description, parnitha) <= 2')
+        q = table.search(query=embedding)
+
+        # filter if given more constraints
+        if user_query.trail_length_min is not None:
+            q = q.where(f'length > {user_query.trail_length_min}')
+        if user_query.trail_length_max is not None:
+            q = q.where(f'length < {user_query.trail_length_max}')
+
+        return q.limit(10).to_list()
+

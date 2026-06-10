@@ -1,7 +1,9 @@
 from typing import Literal, Optional
 
-from lancedb.pydantic import LanceModel
+from lancedb.common import VECTOR_COLUMN_NAME
+from lancedb.pydantic import LanceModel, Vector
 from pydantic import BaseModel, Field
+import pyarrow as pa
 
 
 class Router(BaseModel):
@@ -66,6 +68,9 @@ class Coordinate(BaseModel):
 #     descend: int
 #     description: str
 
+VECTOR_DIM = 384
+
+
 class TrailDb(LanceModel):
     id: int
     name: Optional[str]
@@ -77,3 +82,6 @@ class TrailDb(LanceModel):
     ascend: int
     descend: int
     description: str
+    vector: list[list[float]] = Field(
+        json_schema_extra={"arrow_type": pa.list_(pa.list_(pa.float32(), 384))}
+    )

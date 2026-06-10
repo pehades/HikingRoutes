@@ -36,7 +36,7 @@ def route(input_dict: dict):
     if input_dict['routing'].route == 'more_information':
         return 'Give more information about what you want'
     if input_dict['routing'].route == 'query':
-        return prompt | query_model | (lambda x: x.model_dump_json())
+        return prompt | query_model
 
 
 chain = (
